@@ -1,0 +1,8 @@
+.env
+.idea/
+__pycache__
+*.sqlite3
+celerybeat-schedule
+celerybeat.pid
+celery.log
+.coverage
