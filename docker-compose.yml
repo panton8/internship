@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  db:
+    container_name: database
+    image: postgres
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      -  "5432:5432"
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+  web:
+    container_name: app
+    build:
+      context: .
+    entrypoint: ./entrypoint-django.sh
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db

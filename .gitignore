@@ -6,3 +6,6 @@ celerybeat-schedule
 celerybeat.pid
 celery.log
 .coverage
+/data/db
+Pipfile.lock
+Pipfile
