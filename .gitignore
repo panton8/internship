@@ -7,5 +7,6 @@ celerybeat.pid
 celery.log
 .coverage
 /data/db
+/app
 Pipfile.lock
 Pipfile
