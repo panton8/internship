@@ -15,6 +15,7 @@ class UserManager(BaseUserManager):
             raise ValueError("The Password name must be set")
         user = self.model(
             email=self.normalize_email(email),
+            password=password,
             username=username,
             first_name=first_name,
             last_name=last_name,
@@ -26,6 +27,7 @@ class UserManager(BaseUserManager):
     def create_superuser(self, first_name, last_name, username, email, password):
         user = self.create_user(
             email=self.normalize_email(email),
+            password=password,
             username=username,
             first_name=first_name,
             last_name=last_name,
@@ -34,4 +36,6 @@ class UserManager(BaseUserManager):
         user.is_superuser = True
         user.is_active = True
         user.is_staff = True
+        user.role = "ADMIN"
+        user.save()
         return user
