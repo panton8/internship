@@ -15,7 +15,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         USER = "USER", "User"
 
     username = models.CharField(unique=True, max_length=20)
-    email = models.EmailField(unique=True, max_length=80)
+    email = models.EmailField(unique=True)
     role = models.CharField(max_length=7, choices=Roles.choices, default=Roles.USER)
     balance = models.FloatField(default=0.0)
     is_staff = models.BooleanField(default=False)
