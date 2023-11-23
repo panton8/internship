@@ -1,17 +1,20 @@
 from rest_framework import status, viewsets
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .authentication import JWTAuthentication
 from .models import User
 from .serializers import (LoginSerializer, RegistrationSerializer,
                           UserSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = "username"
+    # authentication_classes = [JWTAuthentication]
 
 
 class RegistrationView(APIView):
