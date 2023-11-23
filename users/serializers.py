@@ -7,7 +7,29 @@ from .models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["email", "username", "password", "role", "balance", "is_active"]
+        fields = [
+            "email",
+            "username",
+            "password",
+            "role",
+            "balance",
+            "is_active",
+            "token",
+        ]
+        read_only_fields = ("token",)
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+
+        if password is not None:
+            instance.set_password(password)
+
+        instance.save()
+
+        return instance
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
