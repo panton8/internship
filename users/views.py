@@ -14,7 +14,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = "username"
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication]
 
 
 class RegistrationView(APIView):
@@ -42,3 +42,13 @@ class LoginView(APIView):
         serializer.is_valid(raise_exception=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request):
+        token = str(request.auth)
+        request.user.logout(token)
+        return Response(status=status.HTTP_204_NO_CONTENT)
