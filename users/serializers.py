@@ -16,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "token",
         ]
-        read_only_fields = ("token",)
+        read_only_fields = ("token", "is_active", "role")
 
     def update(self, instance, validated_data):
         password = validated_data.pop("password", None)
