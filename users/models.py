@@ -6,7 +6,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.cache import cache
 from django.db import models
 
-from .managers import UserManager
+from users.managers import UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin):
