@@ -1,77 +1,53 @@
 from rest_framework import status, viewsets
-from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from .authentication import JWTAuthentication
-from .models import User
-from .serializers import (LoginSerializer, RegistrationSerializer,
-                          UserSerializer)
+from users.models import User
+from users.serializers import (LoginSerializer, RegistrationSerializer,
+                               UserSerializer)
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    lookup_field = "username"
-    authentication_classes = [JWTAuthentication]
+class UserViewSet(viewsets.GenericViewSet):
+    @action(
+        detail=False,
+        methods=["get"],
+        permission_classes=[IsAuthenticated],
+        serializer_class=UserSerializer,
+    )
+    def user_list(self, request):
+        queryset = User.objects.all()
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-class RegistrationView(APIView):
-    permission_classes = (AllowAny,)
-    serializer_class = RegistrationSerializer
-
-    def post(self, request):
-        user = request.data
-
-        serializer = self.serializer_class(data=user)
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        serializer_class=RegistrationSerializer,
+    )
+    def signup(self, request):
+        user_data = request.data
+        serializer = self.serializer_class(data=user_data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
-class LoginView(APIView):
-    permission_classes = (AllowAny,)
-    serializer_class = LoginSerializer
-
-    def post(self, request):
-        user = request.data
-
-        serializer = self.serializer_class(data=user)
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        serializer_class=LoginSerializer,
+    )
+    def signin(self, request):
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-
-    def post(self, request):
+    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
+    def logout(self, request):
         token = str(request.auth)
         request.user.logout(token)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class UserUpdateAPIView(RetrieveUpdateAPIView):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = UserSerializer
-    authentication_classes = [JWTAuthentication]
-
-    def retrieve(self, request, *args, **kwargs):
-        serializer = self.serializer_class(request.user)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def update(self, request, *args, **kwargs):
-        serializer_data = request.data
-
-        serializer = self.serializer_class(
-            request.user, data=serializer_data, partial=True
+        return Response(
+            {"detail": "Successfully logged out."}, status=status.HTTP_204_NO_CONTENT
         )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
