@@ -40,11 +40,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     "rest_framework",
-
     "users.apps.UsersConfig",
-
     "drf_yasg",
 ]
 
@@ -56,8 +53,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-
-    "users.middleware.JWTMiddleware"
+    "users.middleware.JWTMiddleware",
 ]
 
 ROOT_URLCONF = "crypto_project.urls"

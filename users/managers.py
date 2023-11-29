@@ -2,27 +2,35 @@ from django.contrib.auth.base_user import BaseUserManager
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, username, email, password):
+    def create_user(self, first_name, last_name, username, email, password):
         if not email:
             raise ValueError("The Email must be set")
         if not username:
             raise ValueError("The Username must be set")
+        if not first_name:
+            raise ValueError("The Last name must be set")
+        if not last_name:
+            raise ValueError("The First name must be set")
         if not password:
             raise ValueError("The Password name must be set")
         user = self.model(
             email=self.normalize_email(email),
             password=password,
             username=username,
+            first_name=first_name,
+            last_name=last_name,
         )
         user.set_password(password)
         user.save()
         return user
 
-    def create_superuser(self, username, email, password):
+    def create_superuser(self, first_name, last_name, username, email, password):
         user = self.create_user(
             email=self.normalize_email(email),
             password=password,
             username=username,
+            first_name=first_name,
+            last_name=last_name,
         )
         user.set_password(password)
         user.is_superuser = True
