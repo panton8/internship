@@ -10,8 +10,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         ANALYST = "ANALYST", "Analyst"
         USER = "USER", "User"
 
-    first_name = models.CharField(max_lenght=30)
-    last_name = models.CharField(max_lenght=30)
     username = models.CharField(unique=True, max_length=20)
     email = models.EmailField(unique=True, max_length=80)
     role = models.CharField(max_length=7, choices=Roles.choices, default=Roles.USER)
