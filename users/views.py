@@ -1,4 +1,4 @@
-from rest_framework import status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -8,17 +8,12 @@ from users.serializers import (LoginSerializer, RegistrationSerializer,
                                UserSerializer)
 
 
-class UserViewSet(viewsets.GenericViewSet):
-    @action(
-        detail=False,
-        methods=["get"],
-        permission_classes=[IsAuthenticated],
-        serializer_class=UserSerializer,
-    )
-    def user_list(self, request):
-        queryset = User.objects.all()
-        serializer = self.serializer_class(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class UserViewSet(
+    mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet
+):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
 
     @action(
         detail=False,
