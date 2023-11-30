@@ -53,3 +53,6 @@ class Wallet(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     crypto = models.ForeignKey(Crypto, on_delete=models.CASCADE)
     amount = models.FloatField(validators=[MinValueValidator(0.0)])
+
+    class Meta:
+        unique_together = ("user", "crypto")
