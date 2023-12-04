@@ -6,9 +6,9 @@ from users.models import User
 
 
 class Crypto(models.Model):
-    name = models.CharField()
-    capacity = models.FloatField()
-    exchange_rate = models.FloatField()
+    name = models.CharField(unique=True)
+    capacity = models.FloatField(blank=True, null=True)
+    exchange_rate = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return self.name
