@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 from rest_framework import serializers
 
 from stocks.models import Crypto, Order, Subscription, Wallet
@@ -35,3 +36,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ["user", "crypto", "order_type", "total_price", "amount", "is_auto"]
+
+
+class AdditionalBalanceSerializer(serializers.Serializer):
+    additional_balance = serializers.FloatField(validators=[MinValueValidator(0.01)])
