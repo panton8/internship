@@ -16,6 +16,12 @@ class WalletViewSet(
     serializer_class = WalletSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        if self.action == "list":
+            if self.request.user.role not in [User.Roles.ADMIN, User.Roles.ANALYST]:
+                return Wallet.objects.filter(user=self.request.user)
+        return self.queryset
+
 
 class OrderViewSet(
     mixins.ListModelMixin,
