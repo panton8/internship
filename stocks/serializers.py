@@ -1,7 +1,7 @@
-from django.core.validators import MinValueValidator
 from rest_framework import serializers
 
 from stocks.models import Crypto, Order, Subscription, Wallet
+from users.models import User
 from users.serializers import UserSerializer
 
 
@@ -12,12 +12,11 @@ class CryptoSerializer(serializers.ModelSerializer):
 
 
 class WalletSerializer(serializers.ModelSerializer):
-    user = UserSerializer().fields.get("username")
     crypto = CryptoSerializer().fields.get("name")
 
     class Meta:
         model = Wallet
-        fields = ["user", "crypto", "amount"]
+        fields = ["crypto", "amount"]
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
@@ -37,6 +36,12 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ["user", "crypto", "order_type", "total_price", "amount", "is_auto"]
 
+    def to_representation(self, instance):
+        representation = super(OrderSerializer, self).to_representation(instance)
 
-class AdditionalBalanceSerializer(serializers.Serializer):
-    additional_balance = serializers.FloatField(validators=[MinValueValidator(0.01)])
+        user = self.context["request"].user
+
+        if user.role in [User.Roles.USER]:
+            representation.pop("user", None)
+
+        return representation
