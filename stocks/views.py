@@ -39,6 +39,21 @@ class OrderViewSet(
                 return Order.objects.filter(user=self.request.user)
         return self.queryset
 
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[IsAuthenticated],
+        serializer_class=OrderSerializer,
+    )
+    def add(self, request):
+        new_order = request.data
+        serializer = self.serializer_class(
+            data=new_order, context={"request": request}, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 class CryptoViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = Crypto.objects.all()
