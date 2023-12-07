@@ -3,10 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
-from stocks.serializers import AdditionalBalanceSerializer
 from users.models import User
-from users.serializers import (LoginSerializer, RegistrationSerializer,
-                               UserSerializer)
+from users.serializers import (AdminUpdateSerializer, LoginSerializer,
+                               RegistrationSerializer, UserSerializer)
 
 
 class UserViewSet(
@@ -49,19 +48,34 @@ class UserViewSet(
         )
 
     @action(
-        detail=False,
+        detail=True,
         methods=["patch"],
-        permission_classes=[IsAuthenticated],
-        serializer_class=AdditionalBalanceSerializer,
+        permission_classes=[IsAuthenticated, IsAdminUser],
+        serializer_class=AdminUpdateSerializer,
     )
-    def fillup(self, request):
-        additional_balance = request.data
-        serializer = self.serializer_class(data=additional_balance)
+    def update_user(self, request, pk):
+        user = self.get_object()
+        update_data = request.data
+        serializer = self.serializer_class(data=update_data, partial=True)
         serializer.is_valid(raise_exception=True)
-        user = request.user
-        user.balance += serializer.data.get("additional_balance")
+
+        allowed_fields = set(update_data.keys()) - {"balance", "role", "is_active"}
+        if allowed_fields:
+            return Response(
+                {"error": f"Unsupported fields: {', '.join(allowed_fields)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if "balance" in update_data:
+            user.balance += serializer.validated_data.get("balance")
+        if "role" in update_data:
+            user.role = serializer.validated_data.get("role")
+        if "is_active" in update_data:
+            user.is_active = serializer.validated_data.get("is_active")
+
         user.save()
 
         return Response(
-            {"message": "Balance updated successfully"}, status=status.HTTP_200_OK
+            {"message": f"User data for {user.username} updated successfully"},
+            status=status.HTTP_200_OK,
         )
