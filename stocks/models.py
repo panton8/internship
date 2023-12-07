@@ -15,30 +15,30 @@ class Crypto(models.Model):
 
 
 class Order(models.Model):
-    class Type(models.TextChoices):
+    class OrderType(models.TextChoices):
         PURCHASE = "PURCHASE", "Purchase"
         SALE = "SALE", "Sale"
 
+    class ExecutionMethod(models.TextChoices):
+        BY_AMOUNT = "AMOUNT", "By Amount"
+        BY_PRICE = "PRICE", "By Price"
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     crypto = models.ForeignKey(Crypto, on_delete=models.SET_NULL, null=True)
-    order_type = models.CharField(max_length=8, choices=Type.choices)
+    order_type = models.CharField(max_length=8, choices=OrderType.choices)
     total_price = models.FloatField(blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
+    execution_method = models.CharField(
+        max_length=6, choices=ExecutionMethod.choices, default="PRICE"
+    )
     is_auto = models.BooleanField()
+    desired_exchange_rate = models.FloatField(blank=True, null=True)
 
-    def clean(self):
-        if self.total_price is not None and self.amount is not None:
-            raise ValidationError(
-                "Please fill in either total_price or amount, not both."
-            )
-        elif self.total_price is None and self.amount is None:
-            raise ValidationError("Please fill in either total_price or amount.")
-
-        if self.order_type == Order.Type.PURCHASE:
-            if self.amount is not None and self.amount > self.crypto.capacity:
-                raise ValidationError("Amount exceeds crypto capacity.")
-            elif self.total_price is not None and self.total_price > self.user.balance:
-                raise ValidationError("Total price exceeds user balance.")
+    def fill_amount_or_price(self):
+        if self.execution_method == self.ExecutionMethod.BY_AMOUNT:
+            self.total_price = self.crypto.exchange_rate * self.amount
+        else:
+            self.amount = self.total_price / self.crypto.exchange_rate
 
 
 class Subscription(models.Model):
@@ -56,3 +56,11 @@ class Wallet(models.Model):
 
     class Meta:
         unique_together = ("user", "crypto")
+
+
+# class Transaction(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.SET_NULL)
+#     order = models.ForeignKey(Order, on_delete=models.CASCADE)
+#
+#     class Meta:
+#         unique_together = ("user", "order")
