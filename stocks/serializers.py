@@ -29,12 +29,21 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    user = UserSerializer().fields.get("username")
-    crypto = CryptoSerializer().fields.get("name")
+    user = serializers.CharField(source="user.username")
+    crypto = serializers.CharField(source="crypto.name")
 
     class Meta:
         model = Order
-        fields = ["user", "crypto", "order_type", "total_price", "amount", "is_auto"]
+        fields = [
+            "user",
+            "crypto",
+            "order_type",
+            "execution_method",
+            "total_price",
+            "amount",
+            "is_auto",
+            "desired_exchange_rate",
+        ]
 
     def to_representation(self, instance):
         representation = super(OrderSerializer, self).to_representation(instance)
@@ -45,3 +54,11 @@ class OrderSerializer(serializers.ModelSerializer):
             representation.pop("user", None)
 
         return representation
+
+    def create(self, validated_data):
+        validated_data["user"] = self.context["request"].user
+        crypto_name = validated_data["crypto"]
+        validated_data["crypto"] = Crypto.objects.get(name=crypto_name["name"])
+        new_order = Order.objects.create(**validated_data)
+        new_order.fill_amount_or_price()
+        return new_order
