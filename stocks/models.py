@@ -31,7 +31,7 @@ class Order(models.Model):
     execution_method = models.CharField(
         max_length=6, choices=ExecutionMethod.choices, default="PRICE"
     )
-    is_auto = models.BooleanField()
+    is_auto = models.BooleanField(default=False)
     desired_exchange_rate = models.FloatField(blank=True, null=True)
 
     def fill_amount_or_price(self):
@@ -58,9 +58,9 @@ class Wallet(models.Model):
         unique_together = ("user", "crypto")
 
 
-# class Transaction(models.Model):
-#     user = models.ForeignKey(User, on_delete=models.SET_NULL)
-#     order = models.ForeignKey(Order, on_delete=models.CASCADE)
-#
-#     class Meta:
-#         unique_together = ("user", "order")
+class History(models.Model):
+    username = models.CharField(blank=False)
+    crypto_name = models.CharField(blank=False)
+    total_price = models.FloatField(blank=True, null=True)
+    amount = models.FloatField(blank=True, null=True)
+    date = models.DateTimeField(auto_now_add=True)
