@@ -55,10 +55,15 @@ class OrderSerializer(serializers.ModelSerializer):
 
         return representation
 
+
+class CreateOrderSerializer(OrderSerializer):
+    user = serializers.CharField(allow_null=True, read_only=True)
+
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
         crypto_name = validated_data["crypto"]
         validated_data["crypto"] = Crypto.objects.get(name=crypto_name["name"])
         new_order = Order.objects.create(**validated_data)
         new_order.fill_amount_or_price()
+        new_order.save()
         return new_order
