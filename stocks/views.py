@@ -1,11 +1,12 @@
-from rest_framework import mixins, status, viewsets
+from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from stocks.models import Crypto, Order, Subscription, Wallet
-from stocks.serializers import (CryptoSerializer, OrderSerializer,
-                                SubscriptionSerializer, WalletSerializer)
+from stocks.serializers import (CreateOrderSerializer, CryptoSerializer,
+                                OrderSerializer, SubscriptionSerializer,
+                                WalletSerializer)
 from users.models import User
 
 
@@ -23,15 +24,31 @@ class WalletViewSet(
         return self.queryset
 
 
-class OrderViewSet(
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
-    viewsets.GenericViewSet,
-):
+class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
-    serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
+
+    serializer_classes = {
+        "create": CreateOrderSerializer,
+        "default": OrderSerializer,
+    }
+
+    permission_classes = {
+        "list": [IsAuthenticated],
+        "create": [IsAuthenticated],
+        "update": [IsAuthenticated, IsAdminUser],
+        "partial_update": [IsAuthenticated, IsAdminUser],
+        "destroy": [permissions.IsAuthenticated, permissions.IsAdminUser],
+    }
+
+    def get_permissions(self):
+        return [
+            permission() for permission in self.permission_classes.get(self.action, [])
+        ]
+
+    def get_serializer_class(self):
+        return self.serializer_classes.get(
+            self.action, self.serializer_classes["default"]
+        )
 
     def get_queryset(self):
         if self.action == "list":
@@ -39,41 +56,30 @@ class OrderViewSet(
                 return Order.objects.filter(user=self.request.user)
         return self.queryset
 
-    @action(
-        detail=False,
-        methods=["post"],
-        permission_classes=[IsAuthenticated],
-        serializer_class=OrderSerializer,
-    )
-    def add(self, request):
-        new_order = request.data
-        serializer = self.serializer_class(
-            data=new_order, context={"request": request}, partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
-class CryptoViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class CryptoViewSet(viewsets.ModelViewSet):
     queryset = Crypto.objects.all()
-    serializer_class = CryptoSerializer
-    permission_classes = [AllowAny]
+    serializer_classes = {
+        "default": CryptoSerializer,
+    }
 
-    @action(
-        detail=False,
-        methods=["post"],
-        permission_classes=[IsAuthenticated],
-        serializer_class=CryptoSerializer,
-    )
-    def add(self, request):
-        if request.user.is_superuser:
-            new_crypto = request.data
-            serializer = self.serializer_class(data=new_crypto)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_403_FORBIDDEN)
+    permission_classes = {
+        "list": [IsAuthenticated],
+        "create": [IsAuthenticated, IsAdminUser],
+        "update": [IsAuthenticated, IsAdminUser],
+        "partial_update": [IsAuthenticated, IsAdminUser],
+        "destroy": [permissions.IsAuthenticated, permissions.IsAdminUser],
+    }
+
+    def get_permissions(self):
+        return [
+            permission() for permission in self.permission_classes.get(self.action, [])
+        ]
+
+    def get_serializer_class(self):
+        return self.serializer_classes.get(
+            self.action, self.serializer_classes["default"]
+        )
 
 
 class SubscriptionViewSet(
