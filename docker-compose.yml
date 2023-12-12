@@ -9,9 +9,10 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:
-      -  "5432:5432"
+      - "5432:5432"
     volumes:
       - ./data/db:/var/lib/postgresql/data
+
   web:
     container_name: app
     build: .
@@ -23,4 +24,41 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - db
+      - redis
+
+  redis:
+    container_name: redis
+    image: "redis:alpine"
+
+  celery:
+    container_name: celery
+    build: .
+    command: celery -A crypto_project worker -l info
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+
+  celery_beat:
+    container_name: celery_beat
+    build: .
+    command: celery -A crypto_project beat -l info
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+
+  flower:
+    container_name: flower
+    build: .
+    command: celery -A crypto_project flower
+    ports:
+      - "5555:5555"
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
