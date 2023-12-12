@@ -15,7 +15,15 @@ class WalletAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("user", "crypto", "order_type", "total_price", "amount", "is_auto")
+    list_display = (
+        "user",
+        "crypto",
+        "order_type",
+        "execution_method",
+        "total_price",
+        "amount",
+        "is_auto",
+    )
 
 
 @admin.register(Subscription)
