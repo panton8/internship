@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from stocks.models import Crypto, Order, Subscription, Wallet
+from stocks.models import Crypto, History, Order, Subscription, Wallet
 
 
 @admin.register(Crypto)
@@ -23,9 +23,15 @@ class OrderAdmin(admin.ModelAdmin):
         "total_price",
         "amount",
         "is_auto",
+        "desired_exchange_rate",
     )
 
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ("user", "crypto")
+
+
+@admin.register(History)
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("username", "crypto_name", "total_price", "amount", "date")
