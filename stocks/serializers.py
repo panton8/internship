@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from stocks.models import Crypto, Order, Subscription, Wallet
+from stocks.utils import order_params_check
 from users.models import User
 from users.serializers import UserSerializer
 
@@ -63,7 +64,6 @@ class CreateOrderSerializer(OrderSerializer):
         validated_data["user"] = self.context["request"].user
         crypto_name = validated_data["crypto"]
         validated_data["crypto"] = Crypto.objects.get(name=crypto_name["name"])
+        order_params_check(validated_data)
         new_order = Order.objects.create(**validated_data)
-        new_order.fill_amount_or_price()
-        new_order.save()
         return new_order
