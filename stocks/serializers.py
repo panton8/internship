@@ -62,8 +62,13 @@ class CreateOrderSerializer(OrderSerializer):
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
-        crypto_name = validated_data["crypto"]
-        validated_data["crypto"] = Crypto.objects.get(name=crypto_name["name"])
+        crypto_name = validated_data["crypto"]["name"]
+        try:
+            validated_data["crypto"] = Crypto.objects.get(name=crypto_name)
+        except Crypto.DoesNotExist:
+            raise serializers.ValidationError({"error": "Non-existent currency"})
         order_params_check(validated_data)
         new_order = Order.objects.create(**validated_data)
+        new_order.fill_amount_or_price()
+        new_order.save()
         return new_order
