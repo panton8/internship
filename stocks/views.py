@@ -10,18 +10,13 @@ from stocks.serializers import (CreateOrderSerializer, CryptoSerializer,
 from users.models import User
 
 
-class WalletViewSet(
-    mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet
-):
+class WalletViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = Wallet.objects.all()
     serializer_class = WalletSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        if self.action == "list":
-            if self.request.user.role not in [User.Roles.ADMIN, User.Roles.ANALYST]:
-                return Wallet.objects.filter(user=self.request.user)
-        return self.queryset
+        return Wallet.objects.filter(user=self.request.user)
 
 
 class OrderViewSet(viewsets.ModelViewSet):
