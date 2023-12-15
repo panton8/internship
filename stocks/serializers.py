@@ -3,13 +3,12 @@ from rest_framework import serializers
 from stocks.models import Crypto, History, Order, Subscription, Wallet
 from stocks.utils import order_params_check
 from users.models import User
-from users.serializers import UserSerializer
 
 
 class CryptoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Crypto
-        fields = ["name", "capacity", "exchange_rate"]
+        fields = ["name", "code", "capacity", "exchange_rate"]
 
 
 class WalletSerializer(serializers.ModelSerializer):
@@ -21,12 +20,24 @@ class WalletSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
-    user = UserSerializer().fields.get("username")
-    crypto = CryptoSerializer().fields.get("name")
+    crypto = CryptoSerializer()
 
     class Meta:
         model = Subscription
-        fields = ["user", "crypto"]
+        fields = ["crypto"]
+
+
+class AddSubscriptionSerializer(SubscriptionSerializer):
+    user = serializers.CharField(allow_null=True, read_only=True)
+
+    def create(self, validated_data):
+        validated_data["user"] = self.context["request"].user
+        crypto_name = validated_data["crypto"]["name"]
+        try:
+            validated_data["crypto"] = Crypto.objects.get(name=crypto_name)
+        except Crypto.DoesNotExist:
+            raise serializers.ValidationError({"error": "Non-existent currency"})
+        return Subscription.objects.create(**validated_data)
 
 
 class OrderSerializer(serializers.ModelSerializer):
