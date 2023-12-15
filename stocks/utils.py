@@ -13,7 +13,11 @@ def order_params_check(validated_data):
     user = validated_data["user"]
     crypto = validated_data["crypto"]
     wallet = Wallet.objects.filter(user=user, crypto=crypto).first()
-    if validated_data["order_type"] == Order.OrderType.PURCHASE:
+    if validated_data[
+        "order_type"
+    ] == Order.OrderType.PURCHASE and not validated_data.get(
+        "desired_exchange_rate", False
+    ):
         if (
             validated_data["execution_method"] == Order.ExecutionMethod.BY_PRICE
             and user.balance < validated_data["total_price"]
@@ -23,7 +27,9 @@ def order_params_check(validated_data):
             raise serializers.ValidationError(
                 {"error": "Order error. Your balance is not enough"}
             )
-    if validated_data["order_type"] == Order.OrderType.SALE:
+    if validated_data["order_type"] == Order.OrderType.SALE and not validated_data.get(
+        "desired_exchange_rate", False
+    ):
         if not wallet:
             raise serializers.ValidationError(
                 {"error": "Order error. You don't have such crypto"}
@@ -37,3 +43,13 @@ def order_params_check(validated_data):
             raise serializers.ValidationError(
                 {"error": "Order error.  You don't have enough crypto for sale."}
             )
+
+
+def order_possible_complete_check(user, order, wallet):
+    if order.order_type == Order.OrderType.PURCHASE:
+        if user.balance < order.total_price:
+            return False
+    else:
+        if wallet.amount < order.amount:
+            return False
+    return True
