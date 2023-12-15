@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from stocks.models import Crypto, Order, Subscription, Wallet
+from stocks.models import Crypto, History, Order, Subscription, Wallet
 from stocks.utils import order_params_check
 from users.models import User
 from users.serializers import UserSerializer
@@ -72,3 +72,19 @@ class CreateOrderSerializer(OrderSerializer):
         new_order.fill_amount_or_price()
         new_order.save()
         return new_order
+
+
+class HistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = History
+        fields = ("username", "crypto_name", "total_price", "amount", "date")
+
+    def to_representation(self, instance):
+        representation = super(HistorySerializer, self).to_representation(instance)
+
+        user = self.context["request"].user
+
+        if user.role in [User.Roles.USER]:
+            representation.pop("username", None)
+
+        return representation
