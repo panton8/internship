@@ -7,6 +7,7 @@ from users.models import User
 
 class Crypto(models.Model):
     name = models.CharField(unique=True)
+    code = models.CharField(unique=True)
     capacity = models.FloatField(blank=True, null=True)
     exchange_rate = models.FloatField(blank=True, null=True)
 
