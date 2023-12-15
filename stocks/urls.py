@@ -8,7 +8,7 @@ router = DefaultRouter()
 router.register("wallet", WalletViewSet)
 router.register("orders", OrderViewSet)
 router.register("cryptos", CryptoViewSet)
-router.register("stocks", SubscriptionViewSet)
+router.register("subs", SubscriptionViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
