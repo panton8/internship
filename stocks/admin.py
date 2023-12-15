@@ -5,7 +5,7 @@ from stocks.models import Crypto, History, Order, Subscription, Wallet
 
 @admin.register(Crypto)
 class CryptoAdmin(admin.ModelAdmin):
-    list_display = ("name", "capacity", "exchange_rate")
+    list_display = ("name", "code", "capacity", "exchange_rate")
 
 
 @admin.register(Wallet)
