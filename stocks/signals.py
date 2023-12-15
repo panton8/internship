@@ -10,7 +10,7 @@ def close_order(sender, instance, created, **kwargs):
     if created and not instance.is_auto:
         complete_order.delay(instance.pk)
     if created and instance.is_auto:
-        complete_auto_order.delay(instance.pk, instance.crypto.exchange_rate)
+        complete_auto_order.delay(instance.crypto.pk, instance.crypto.exchange_rate)
 
 
 @receiver(pre_save, sender=Crypto)
