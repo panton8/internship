@@ -1,10 +1,9 @@
-from rest_framework import mixins, permissions, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
-from rest_framework.response import Response
+from rest_framework import mixins, permissions, viewsets
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from stocks.models import Crypto, Order, Subscription, Wallet
-from stocks.serializers import (CreateOrderSerializer, CryptoSerializer,
+from stocks.serializers import (AddSubscriptionSerializer,
+                                CreateOrderSerializer, CryptoSerializer,
                                 OrderSerializer, SubscriptionSerializer,
                                 WalletSerializer)
 from users.models import User
@@ -63,7 +62,7 @@ class CryptoViewSet(viewsets.ModelViewSet):
         "create": [IsAuthenticated, IsAdminUser],
         "update": [IsAuthenticated, IsAdminUser],
         "partial_update": [IsAuthenticated, IsAdminUser],
-        "destroy": [permissions.IsAuthenticated, permissions.IsAdminUser],
+        "destroy": [IsAuthenticated, IsAdminUser],
     }
 
     def get_permissions(self):
@@ -78,17 +77,32 @@ class CryptoViewSet(viewsets.ModelViewSet):
 
 
 class SubscriptionViewSet(
-    mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.CreateModelMixin,
+    viewsets.GenericViewSet,
 ):
     queryset = Subscription.objects.all()
-    serializer_class = SubscriptionSerializer
-    permission_classes = [IsAuthenticated]
+    serializer_classes = {
+        "create": AddSubscriptionSerializer,
+        "default": SubscriptionSerializer,
+    }
 
-    @action(
-        detail=False,
-        methods=["post"],
-        permission_classes=[IsAuthenticated],
-        serializer_class=...,
-    )
-    def add(self, request):
-        pass
+    permission_classes = {
+        "list": [IsAuthenticated],
+        "create": [IsAuthenticated, IsAdminUser],
+        "destroy": [IsAuthenticated],
+    }
+
+    def get_permissions(self):
+        return [
+            permission() for permission in self.permission_classes.get(self.action, [])
+        ]
+
+    def get_serializer_class(self):
+        return self.serializer_classes.get(
+            self.action, self.serializer_classes["default"]
+        )
+
+    def get_queryset(self):
+        return Subscription.objects.filter(user=self.request.user)
