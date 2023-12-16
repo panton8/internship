@@ -94,7 +94,16 @@ class CreateOrderSerializer(OrderSerializer):
 class HistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = History
-        fields = ("username", "crypto_name", "total_price", "amount", "date")
+        fields = (
+            "username",
+            "crypto_name",
+            "total_price",
+            "amount",
+            "order_type",
+            "execution_method",
+            "exchange_rate",
+            "date",
+        )
 
     def to_representation(self, instance):
         representation = super(HistorySerializer, self).to_representation(instance)
