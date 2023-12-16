@@ -85,12 +85,12 @@ WSGI_APPLICATION = "crypto_project.wsgi.application"
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
 
-CELERY_BEAT_SCHEDULE = {
-    "sample_task": {
-        "task": "stocks.tasks.sample_task",
-        "schedule": crontab(minute="*/1"),
-    },
-}
+# CELERY_BEAT_SCHEDULE = {
+#     "complete_order": {
+#         "task": "stocks.tasks.complete_auto_order",
+#         "schedule": crontab(minute="*/1"),
+#     },
+# }
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
