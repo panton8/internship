@@ -33,32 +33,38 @@ services:
   celery:
     container_name: celery
     build: .
-    command: celery -A crypto_project worker -l info
+    entrypoint: ["/app/entrypoint-celery.sh"]
     env_file:
       - .env
     volumes:
       - .:/app
+    links:
+      - redis
     depends_on:
       - redis
 
-  celery_beat:
-    container_name: celery_beat
-    build: .
-    command: celery -A crypto_project beat -l info
-    env_file:
-      - .env
-    volumes:
-      - .:/app
-    depends_on:
-      - redis
+#  celery_beat:
+#    container_name: celery_beat
+#    build: .
+#    entrypoint: ["/app/entrypoint-celery_beat.sh"]
+#    env_file:
+#      - .env
+#    volumes:
+#      - .:/app
+#    links:
+#      - redis
+#    depends_on:
+#      - redis
 
   flower:
     container_name: flower
     build: .
-    command: celery -A crypto_project flower
+    entrypoint: ["/app/entrypoint-flower.sh"]
     ports:
       - "5555:5555"
     volumes:
       - .:/app
+    links:
+      - redis
     depends_on:
       - redis
