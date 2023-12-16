@@ -34,4 +34,13 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 @admin.register(History)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ("username", "crypto_name", "total_price", "amount", "date")
+    list_display = (
+        "username",
+        "crypto_name",
+        "total_price",
+        "amount",
+        "order_type",
+        "execution_method",
+        "exchange_rate",
+        "date",
+    )
