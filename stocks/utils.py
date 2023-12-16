@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from stocks.models import Order, Wallet
+from stocks.models import Order, Subscription, Wallet
 
 
 def order_params_check(validated_data):
@@ -53,3 +53,10 @@ def order_possible_complete_check(user, order, wallet):
         if wallet.amount < order.amount:
             return False
     return True
+
+
+def check_new_sub(user, crypto):
+    if Subscription.objects.filter(user=user, crypto=crypto).first():
+        raise serializers.ValidationError(
+            {"Info": "You already have such crypto in your subs"}
+        )
