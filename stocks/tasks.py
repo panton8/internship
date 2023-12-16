@@ -31,6 +31,9 @@ def close_order(order, user, possible_wallet):
             crypto_name=order.crypto.name,
             total_price=order.total_price,
             amount=order.amount,
+            order_type=order.order_type,
+            execution_method=order.execution_method,
+            exchange_rate=order.crypto.exchange_rate,
         )
         Order.objects.get(pk=order.pk).delete()
 
