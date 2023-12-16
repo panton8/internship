@@ -62,6 +62,9 @@ class Wallet(models.Model):
 class History(models.Model):
     username = models.CharField(blank=False)
     crypto_name = models.CharField(blank=False)
-    total_price = models.FloatField(blank=True, null=True)
-    amount = models.FloatField(blank=True, null=True)
-    date = models.DateTimeField(auto_now_add=True)
+    total_price = models.FloatField(blank=False)
+    amount = models.FloatField(blank=False)
+    order_type = models.CharField(max_length=8, blank=False)
+    execution_method = models.CharField(max_length=6, blank=False)
+    exchange_rate = models.FloatField(blank=False)
+    date = models.DateTimeField(auto_now_add=True, blank=False)
