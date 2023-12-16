@@ -1,11 +1,11 @@
 from rest_framework import mixins, permissions, viewsets
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
-from stocks.models import Crypto, Order, Subscription, Wallet
+from stocks.models import Crypto, History, Order, Subscription, Wallet
 from stocks.serializers import (AddSubscriptionSerializer,
                                 CreateOrderSerializer, CryptoSerializer,
-                                OrderSerializer, SubscriptionSerializer,
-                                WalletSerializer)
+                                HistorySerializer, OrderSerializer,
+                                SubscriptionSerializer, WalletSerializer)
 from users.models import User
 
 
@@ -31,7 +31,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         "create": [IsAuthenticated],
         "update": [IsAuthenticated, IsAdminUser],
         "partial_update": [IsAuthenticated, IsAdminUser],
-        "destroy": [permissions.IsAuthenticated, permissions.IsAdminUser],
+        "destroy": [IsAuthenticated, IsAdminUser],
     }
 
     def get_permissions(self):
@@ -90,7 +90,7 @@ class SubscriptionViewSet(
 
     permission_classes = {
         "list": [IsAuthenticated],
-        "create": [IsAuthenticated, IsAdminUser],
+        "create": [IsAuthenticated],
         "destroy": [IsAuthenticated],
     }
 
@@ -106,3 +106,30 @@ class SubscriptionViewSet(
 
     def get_queryset(self):
         return Subscription.objects.filter(user=self.request.user)
+
+
+class HistoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    queryset = History.objects.all()
+    serializer_classes = {
+        "default": HistorySerializer,
+    }
+
+    permission_classes = {
+        "list": [IsAuthenticated],
+    }
+
+    def get_permissions(self):
+        return [
+            permission() for permission in self.permission_classes.get(self.action, [])
+        ]
+
+    def get_serializer_class(self):
+        return self.serializer_classes.get(
+            self.action, self.serializer_classes["default"]
+        )
+
+    def get_queryset(self):
+        if self.action == "list":
+            if self.request.user.role not in [User.Roles.ADMIN, User.Roles.ANALYST]:
+                return History.objects.filter(username=self.request.user.username)
+        return self.queryset
