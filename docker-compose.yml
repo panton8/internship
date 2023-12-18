@@ -43,18 +43,18 @@ services:
     depends_on:
       - redis
 
-#  celery_beat:
-#    container_name: celery_beat
-#    build: .
-#    entrypoint: ["/app/entrypoint-celery_beat.sh"]
-#    env_file:
-#      - .env
-#    volumes:
-#      - .:/app
-#    links:
-#      - redis
-#    depends_on:
-#      - redis
+  celery_beat:
+    container_name: celery_beat
+    build: .
+    entrypoint: ["/app/entrypoint-celery_beat.sh"]
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    links:
+      - redis
+    depends_on:
+      - redis
 
   flower:
     container_name: flower
