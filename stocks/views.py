@@ -15,7 +15,10 @@ class WalletViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Wallet.objects.filter(user=self.request.user)
+        if self.action == "list":
+            if self.request.user.role != User.Roles.ADMIN:
+                return Wallet.objects.filter(user=self.request.user)
+        return self.queryset
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -105,7 +108,10 @@ class SubscriptionViewSet(
         )
 
     def get_queryset(self):
-        return Subscription.objects.filter(user=self.request.user)
+        if self.action == "list":
+            if self.request.user.role not in [User.Roles.ADMIN, User.Roles.ANALYST]:
+                return Subscription.objects.filter(user=self.request.user)
+        return self.queryset
 
 
 class HistoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
