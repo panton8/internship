@@ -47,10 +47,11 @@ def complete_order(order_pk):
 
 
 @shared_task
-def complete_auto_order(crypto_pk, new_ex_rate):
-    crypto = Crypto.objects.get(pk=crypto_pk)
-    crypto.exchange_rate = new_ex_rate
-    crypto.save()
+def complete_auto_order(crypto_pk=None, new_ex_rate=None):
+    if crypto_pk and new_ex_rate:
+        crypto = Crypto.objects.get(pk=crypto_pk)
+        crypto.exchange_rate = new_ex_rate
+        crypto.save()
     orders = Order.objects.all()
     for order in orders:
         order.fill_amount_or_price()
