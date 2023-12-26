@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 
     "rest_framework",
     "drf_yasg",
+    'django_extensions',
 
     "users.apps.UsersConfig",
     "stocks.apps.StocksConfig",
@@ -103,6 +104,11 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("DB_HOST"),
         "PORT": os.getenv("DB_PORT"),
+        'TEST': {
+            'NAME': 'test_' + os.getenv("DB_NAME"),
+            'USER': os.getenv("DB_USER"),
+            'PASSWORD': os.getenv("DB_PASSWORD"),
+        },
     }
 }
 
@@ -149,4 +155,5 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("users.authentication.JWTAuthentication",),
+    "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
