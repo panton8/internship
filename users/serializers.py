@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.core.validators import MinValueValidator
 from rest_framework import serializers
 
 from users.models import User
@@ -16,7 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "token",
         ]
-        read_only_fields = ("token", "is_active", "role")
+        read_only_fields = ("token", "is_active", "role", "balance")
 
     def update(self, instance, validated_data):
         password = validated_data.pop("password", None)
@@ -70,3 +71,9 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("User in blocklist now")
 
         return {"email": user.email, "username": user.username, "token": user.token}
+
+
+class AdminUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["balance", "role", "is_active"]
