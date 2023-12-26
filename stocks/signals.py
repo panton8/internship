@@ -1,8 +1,8 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from .models import Crypto, Order
-from .tasks import complete_auto_order, complete_order
+from stocks.models import Crypto, Order
+from stocks.tasks import complete_auto_order, complete_order
 
 
 @receiver(post_save, sender=Order)
