@@ -48,6 +48,26 @@ def default_admin_api(default_admin):
 
 
 @pytest.fixture
+def default_analyst():
+    analyst = G(
+        "users.User",
+        username="analyst",
+        email="analyst@gmail.com",
+        password=make_password("analyst"),
+        role=User.Roles.ANALYST,
+    )
+    return analyst
+
+
+@pytest.fixture
+def default_analyst_api(default_analyst):
+    client = APIClient()
+    client.force_authenticate(user=default_analyst)
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {default_analyst.token}")
+    return client
+
+
+@pytest.fixture
 def default_api():
     client = APIClient()
     return client
