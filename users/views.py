@@ -1,3 +1,6 @@
+import smtplib
+from email.message import EmailMessage
+
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
@@ -5,15 +8,20 @@ from rest_framework.response import Response
 
 from users.models import User
 from users.serializers import (AdminUpdateSerializer, LoginSerializer,
-                               RegistrationSerializer, UserSerializer)
+                               PasswordResetSerializer, RegistrationSerializer,
+                               UserSerializer)
 
 
-class UserViewSet(
-    mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet
-):
+class UserViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if self.action == "list":
+            if self.request.user.role not in [User.Roles.ADMIN, User.Roles.ANALYST]:
+                return User.objects.filter(pk=self.request.user.pk)
+        return self.queryset
 
     @action(
         detail=False,
@@ -48,15 +56,26 @@ class UserViewSet(
         )
 
     @action(
+        detail=False, methods=["patch", "put"], permission_classes=[IsAuthenticated]
+    )
+    def update_self(self, request):
+        user = self.request.user
+        update_data = request.data
+        serializer = self.get_serializer(instance=user, data=update_data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
         detail=True,
         methods=["patch"],
         permission_classes=[IsAuthenticated, IsAdminUser],
         serializer_class=AdminUpdateSerializer,
     )
-    def update_user(self, request, pk):
+    def upd_user(self, request, pk):
         user = self.get_object()
         update_data = request.data
-        serializer = self.serializer_class(data=update_data, partial=True)
+        serializer = self.get_serializer(data=update_data, partial=True)
         serializer.is_valid(raise_exception=True)
 
         allowed_fields = set(update_data.keys()) - {"balance", "role", "is_active"}
@@ -79,3 +98,35 @@ class UserViewSet(
             {"message": f"User data for {user.username} updated successfully"},
             status=status.HTTP_200_OK,
         )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        serializer_class=PasswordResetSerializer,
+    )
+    def reset_password(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+        try:
+            user = User.objects.get(email=email)
+            token = user.token
+            msg = EmailMessage()
+            msg["Subject"] = "Reset Password Invitation"
+            msg["From"] = "Crypto Team"
+            msg["To"] = email
+
+            msg.set_content(f"Change password with such token: {token}")
+
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login("morkovsemen@gmail.com", "jfne ytgk ssbf hdut")
+                server.send_message(msg)
+
+            return Response(
+                {"message": "Email sent successfully"}, status=status.HTTP_200_OK
+            )
+        except User.DoesNotExist:
+            return Response(
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
