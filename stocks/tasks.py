@@ -1,13 +1,17 @@
+import os
 import smtplib
 from email.message import EmailMessage
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from dotenv import load_dotenv
 
 from crypto_project.celery import app
 from stocks.models import Crypto, History, Order, Wallet
 from stocks.utils import order_possible_complete_check
 from users.models import User
+
+load_dotenv()
 
 logger = get_task_logger(__name__)
 
@@ -16,8 +20,6 @@ logger = get_task_logger(__name__)
 def close_order(order, user, possible_wallet):
     if order_possible_complete_check(user, order, possible_wallet):
         if order.order_type == Order.OrderType.PURCHASE:
-            user.balance -= order.total_price
-            user.save()
             if possible_wallet:
                 possible_wallet.amount += order.amount
                 possible_wallet.save()
@@ -25,11 +27,14 @@ def close_order(order, user, possible_wallet):
                 Wallet.objects.create(
                     user=order.user, crypto=order.crypto, amount=order.amount
                 )
+            user.balance -= order.total_price
+            user.save()
         else:
             user.balance += order.total_price
             user.save()
             possible_wallet.amount -= order.amount
             possible_wallet.save()
+
         History.objects.create(
             username=order.user.username,
             crypto_name=order.crypto.name,
@@ -47,7 +52,7 @@ def close_order(order, user, possible_wallet):
 def complete_order(order_pk):
     order = Order.objects.get(pk=order_pk)
     user = order.user
-    possible_wallet = Wallet.objects.filter(crypto=order.crypto).first()
+    possible_wallet = Wallet.objects.filter(crypto=order.crypto, user=user).first()
     close_order(order, user, possible_wallet)
 
 
@@ -63,7 +68,9 @@ def complete_auto_order(crypto_pk=None, new_ex_rate=None):
         order.save()
         if order.crypto.exchange_rate <= order.desired_exchange_rate:
             user = order.user
-            possible_wallet = Wallet.objects.filter(crypto=order.crypto).first()
+            possible_wallet = Wallet.objects.filter(
+                crypto=order.crypto, user=user
+            ).first()
             close_order(order, user, possible_wallet)
 
 
@@ -87,6 +94,6 @@ def confirm_order(order_pk, user_pk):
         f"Exchange Rate: {order.crypto.exchange_rate}\n"
     )
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login("morkovsemen@gmail.com", "jfne ytgk ssbf hdut")
+    with smtplib.SMTP_SSL(os.getenv("EMAIL_HOST"), os.getenv("EMAIL_PORT")) as server:
+        server.login(os.getenv("EMAIL_HOST_USER"), os.getenv("EMAIL_HOST_PASSWORD"))
         server.send_message(msg)
