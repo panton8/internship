@@ -1,9 +1,13 @@
+import smtplib
+from email.message import EmailMessage
+
 from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from crypto_project.celery import app
 from stocks.models import Crypto, History, Order, Wallet
 from stocks.utils import order_possible_complete_check
+from users.models import User
 
 logger = get_task_logger(__name__)
 
@@ -35,6 +39,7 @@ def close_order(order, user, possible_wallet):
             execution_method=order.execution_method,
             exchange_rate=order.crypto.exchange_rate,
         )
+        confirm_order(order.pk, user.pk)
         Order.objects.get(pk=order.pk).delete()
 
 
@@ -60,3 +65,28 @@ def complete_auto_order(crypto_pk=None, new_ex_rate=None):
             user = order.user
             possible_wallet = Wallet.objects.filter(crypto=order.crypto).first()
             close_order(order, user, possible_wallet)
+
+
+@shared_task
+def confirm_order(order_pk, user_pk):
+    user = User.objects.get(pk=user_pk)
+    order = Order.objects.get(pk=order_pk)
+    msg = EmailMessage()
+    email = user.email
+    msg["Subject"] = "Order Confirmation"
+    msg["From"] = "Crypto Team"
+    msg["To"] = email
+
+    msg.set_content(
+        f"Ordered was closed successfully  with such parameters: \n"
+        f"Crypto: {order.crypto.name}\n"
+        f"Total Price: {order.total_price}\n"
+        f"Amount : {order.amount}\n"
+        f"Order Type: {order.order_type}\n"
+        f"Execution method: {order.execution_method}\n"
+        f"Exchange Rate: {order.crypto.exchange_rate}\n"
+    )
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login("morkovsemen@gmail.com", "jfne ytgk ssbf hdut")
+        server.send_message(msg)
