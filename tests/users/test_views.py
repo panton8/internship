@@ -60,13 +60,13 @@ class TestSignin:
 class TestLogout:
     @pytest.mark.django_db
     def test_valid_logout(self, default_api):
-        self.user = G(
+        user = G(
             "users.User",
             username="test",
             email="test@example.com",
             password=make_password("testpassword"),
         )
-        default_api.credentials(HTTP_AUTHORIZATION=f"Bearer {self.user.token}")
+        default_api.credentials(HTTP_AUTHORIZATION=f"Bearer {user.token}")
 
         response = default_api.post(reverse("user-logout"))
 
@@ -84,11 +84,11 @@ class TestLogout:
         )
 
 
-class TestUpdateUser:
+class TestUpdateUserByAdmin:
     @pytest.mark.django_db
     def test_valid_update(self, default_admin_api, default_user):
         data = {"balance": 1000, "role": User.Roles.ANALYST}
-        url = reverse("user-update-user", args=(default_user.pk,))
+        url = reverse("user-upd-user", args=(default_user.pk,))
 
         response = default_admin_api.patch(url, data=data)
 
@@ -102,8 +102,44 @@ class TestUpdateUser:
     @pytest.mark.django_db
     def test_invalid_update(self, default_user_api, default_user):
         data = {"balance": 1000, "role": User.Roles.ANALYST}
-        url = reverse("user-update-user", args=(default_user.pk,))
+        url = reverse("user-upd-user", args=(default_user.pk,))
 
         response = default_user_api.patch(url, data=data)
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+class TestUserList:
+    @pytest.mark.django_db
+    def test_user_list(self, default_admin_api, default_user_api, default_api):
+        user = G(
+            "users.User",
+            username="user",
+            email="user@gmail.com",
+            password=make_password("user"),
+        )
+        url = reverse("user-list")
+        default_api.credentials(HTTP_AUTHORIZATION=f"Bearer {user.token}")
+
+        admin_response = default_admin_api.get(url)
+        user1_response = default_user_api.get(url)
+        user2_response = default_api.get(url)
+
+        assert len(admin_response.data) == 3
+        assert len(user1_response.data) == 1
+        assert len(user2_response.data) == 1
+
+
+class TestUpdateUser:
+    @pytest.mark.django_db
+    def test_update(self, default_user_api, default_user):
+        data = {"username": "test2", "balance": 1000, "role": User.Roles.ANALYST}
+        url = reverse("user-update-self")
+
+        response = default_user_api.patch(url, data=data)
+
+        assert response.status_code == status.HTTP_200_OK
+        default_user.refresh_from_db()
+        assert default_user.balance == 0
+        assert default_user.role == User.Roles.USER
+        assert default_user.username == "test2"
