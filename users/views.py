@@ -1,6 +1,8 @@
+import os
 import smtplib
 from email.message import EmailMessage
 
+from dotenv import load_dotenv
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
@@ -10,6 +12,8 @@ from users.models import User
 from users.serializers import (AdminUpdateSerializer, LoginSerializer,
                                PasswordResetSerializer, RegistrationSerializer,
                                UserSerializer)
+
+load_dotenv()
 
 
 class UserViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -119,8 +123,12 @@ class UserViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
             msg.set_content(f"Change password with such token: {token}")
 
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-                server.login("morkovsemen@gmail.com", "jfne ytgk ssbf hdut")
+            with smtplib.SMTP_SSL(
+                os.getenv("EMAIL_HOST"), os.getenv("EMAIL_PORT")
+            ) as server:
+                server.login(
+                    os.getenv("EMAIL_HOST_USER"), os.getenv("EMAIL_HOST_PASSWORD")
+                )
                 server.send_message(msg)
 
             return Response(
