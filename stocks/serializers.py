@@ -12,7 +12,7 @@ class CryptoSerializer(serializers.ModelSerializer):
 
 
 class WalletSerializer(serializers.ModelSerializer):
-    crypto = CryptoSerializer().fields.get("name")
+    crypto = serializers.CharField(source="crypto.name")
 
     class Meta:
         model = Wallet
