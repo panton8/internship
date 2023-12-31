@@ -71,3 +71,15 @@ def default_analyst_api(default_analyst):
 def default_api():
     client = APIClient()
     return client
+
+
+@pytest.fixture
+def default_crypto():
+    crypto = G(
+        "stocks.Crypto",
+        name="Bitcoin",
+        code="BTC",
+        capacity=48965,
+        exchange_rate=44798.56,
+    )
+    return crypto
