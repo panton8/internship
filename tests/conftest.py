@@ -13,6 +13,7 @@ def default_user():
         username="test",
         email="test@gmail.com",
         password=make_password("test"),
+        balance=1000,
     )
     return user
 
