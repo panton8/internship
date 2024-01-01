@@ -77,3 +77,7 @@ class AdminUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["balance", "role", "is_active"]
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
