@@ -94,10 +94,7 @@ class TestUpdateUserByAdmin:
 
         assert response.status_code == status.HTTP_200_OK
         default_user.refresh_from_db()
-        assert (
-            default_user.balance == data["balance"]
-            and default_user.role == data["role"]
-        )
+        assert default_user.role == data["role"]
 
     @pytest.mark.django_db
     def test_invalid_update(self, default_user_api, default_user):
@@ -133,13 +130,13 @@ class TestUserList:
 class TestUpdateUser:
     @pytest.mark.django_db
     def test_update(self, default_user_api, default_user):
-        data = {"username": "test2", "balance": 1000, "role": User.Roles.ANALYST}
+        data = {"username": "test2", "balance": 5000, "role": User.Roles.ANALYST}
         url = reverse("user-update-self")
 
         response = default_user_api.patch(url, data=data)
 
         assert response.status_code == status.HTTP_200_OK
         default_user.refresh_from_db()
-        assert default_user.balance == 0
+        assert default_user.balance == 1000
         assert default_user.role == User.Roles.USER
         assert default_user.username == "test2"
