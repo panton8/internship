@@ -5,10 +5,9 @@ from django.urls import reverse
 from rest_framework import status
 
 from stocks.models import *
-from users.models import User
 
 
-class TestCryptoAdding:
+class TestCryptoViews:
     @pytest.mark.django_db
     def test_valid_adding(self, default_admin_api):
         data = {"name": "Bitcoin", "code": "BTC"}
@@ -25,8 +24,28 @@ class TestCryptoAdding:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
+    @pytest.mark.django_db
+    def test_crypto_list(self, default_user_api, default_crypto):
+        url = reverse("crypto-list")
 
-class TestSubManagement:
+        response = default_user_api.get(url)
+
+        assert response.status_code == 200
+        assert len(response.data) == 1
+
+    @pytest.mark.django_db
+    def test_crypto_list(self, default_api, default_crypto):
+        url = reverse("crypto-list")
+
+        response = default_api.get(url)
+
+        assert response.status_code == 403
+        assert (
+            response.data["detail"] == "Authentication credentials were not provided."
+        )
+
+
+class TestSubViews:
     @pytest.mark.django_db
     def test_valid_adding(self, default_admin_api, default_user_api):
         data1 = {"name": "Bitcoin", "code": "BTC"}
@@ -67,8 +86,6 @@ class TestSubManagement:
         assert response.status_code == 204
         assert Subscription.objects.filter(user=default_user).exists() is False
 
-
-class TestSubList:
     @pytest.mark.django_db
     def test_valid_list_len(
         self, default_admin_api, default_user_api, default_api, default_user
@@ -106,20 +123,81 @@ class TestSubList:
         assert len(response2.data) == 1
 
     @pytest.mark.django_db
-    def test_valid_list_after_unsub(self, default_user_api, default_admin_api):
-        data1 = {"name": "Bitcoin", "code": "BTC"}
-        data2 = {"crypto": "Bitcoin"}
-        urls = [reverse("crypto-list"), reverse("subscription-list")]
+    def test_valid_list_after_unsub(
+        self, default_user_api, default_admin_api, default_crypto
+    ):
+        data = {"crypto": "Bitcoin"}
+        urls = [reverse("subscription-list")]
 
-        default_admin_api.post(urls[0], data=data1)
-        default_user_api.post(urls[1], data=data2)
+        default_user_api.post(urls[0], data=data)
         urls.append(
             reverse(
                 "subscription-detail", args=(Subscription.objects.all().first().pk,)
             )
         )
-        default_user_api.delete(urls[2])
-        response = default_user_api.get(urls[1])
+        default_user_api.delete(urls[1])
+        response = default_user_api.get(urls[0])
 
         assert response.status_code == 200
         assert len(response.data) == 0
+
+
+class TestOrderViews:
+    @pytest.mark.django_db
+    def test_order_adding(self, default_user_api, default_crypto):
+        urls = [reverse("order-list"), reverse("subscription-list")]
+        data = {
+            "crypto": "Bitcoin",
+            "order_type": Order.OrderType.PURCHASE,
+            "execution_method": Order.ExecutionMethod.BY_PRICE,
+            "total_price": 1000,
+            "amount": 1,
+        }
+
+        response = default_user_api.post(urls[0], data=data)
+
+        assert response.status_code == 201
+        assert (
+            response.data["amount"]
+            == response.data["total_price"] / default_crypto.exchange_rate
+        )
+
+
+class TestWalletViews:
+    @pytest.mark.django_db
+    def test_wallet_list(self, default_user_api):
+        url = reverse("wallet-list")
+        response = default_user_api.get(url)
+
+        assert response.status_code == 200
+        assert len(response.data) == 0
+
+    @pytest.mark.django_db
+    def test_invalid_wallet_list(self, default_api):
+        url = reverse("wallet-list")
+        response = default_api.get(url)
+
+        assert response.status_code == 403
+        assert (
+            response.data["detail"] == "Authentication credentials were not provided."
+        )
+
+
+class TestHistoryViews:
+    @pytest.mark.django_db
+    def test_history_list(self, default_user_api):
+        url = reverse("history-list")
+        response = default_user_api.get(url)
+
+        assert response.status_code == 200
+        assert len(response.data) == 0
+
+    @pytest.mark.django_db
+    def test_invalid_history_list(self, default_api):
+        url = reverse("history-list")
+        response = default_api.get(url)
+
+        assert response.status_code == 403
+        assert (
+            response.data["detail"] == "Authentication credentials were not provided."
+        )
