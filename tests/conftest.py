@@ -84,3 +84,8 @@ def default_crypto():
         exchange_rate=44798.56,
     )
     return crypto
+
+
+@pytest.fixture
+def crypto_data():
+    return {"name": "Bitcoin", "code": "BTC"}

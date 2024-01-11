@@ -13,10 +13,13 @@ def order_params_check(validated_data):
     user = validated_data["user"]
     crypto = validated_data["crypto"]
     wallet = Wallet.objects.filter(user=user, crypto=crypto).first()
-    if validated_data[
-        "order_type"
-    ] == Order.OrderType.PURCHASE and not validated_data.get(
-        "desired_exchange_rate", False
+    if (
+        validated_data["order_type"] == Order.OrderType.PURCHASE
+        and not validated_data.get("desired_exchange_rate", False)
+    ) or (
+        validated_data["order_type"] == Order.OrderType.PURCHASE
+        and validated_data.get("desired_exchange_rate", False)
+        and not validated_data.get("is_auto", False)
     ):
         if (
             validated_data["execution_method"] == Order.ExecutionMethod.BY_PRICE
@@ -60,3 +63,6 @@ def check_new_sub(user, crypto):
         raise serializers.ValidationError(
             {"Info": "You already have such crypto in your subs"}
         )
+
+
+################ admin orders

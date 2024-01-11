@@ -1,7 +1,8 @@
-from rest_framework import mixins, permissions, viewsets
+from rest_framework import mixins, viewsets
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from stocks.models import Crypto, History, Order, Subscription, Wallet
+from stocks.permissions import IsOwnerOrAdmin
 from stocks.serializers import (AddSubscriptionSerializer,
                                 CreateOrderSerializer, CryptoSerializer,
                                 HistorySerializer, OrderSerializer,
@@ -28,18 +29,16 @@ class OrderViewSet(viewsets.ModelViewSet):
         "create": CreateOrderSerializer,
         "default": OrderSerializer,
     }
+    default_permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
 
-    permission_classes = {
-        "list": [IsAuthenticated],
-        "create": [IsAuthenticated],
-        "update": [IsAuthenticated, IsAdminUser],
-        "partial_update": [IsAuthenticated, IsAdminUser],
-        "destroy": [IsAuthenticated, IsAdminUser],
-    }
+    permission_classes = {"list": [IsAuthenticated], "create": [IsAuthenticated]}
 
     def get_permissions(self):
         return [
-            permission() for permission in self.permission_classes.get(self.action, [])
+            permission()
+            for permission in self.permission_classes.get(
+                self.action, self.default_permission_classes
+            )
         ]
 
     def get_serializer_class(self):
@@ -60,17 +59,16 @@ class CryptoViewSet(viewsets.ModelViewSet):
         "default": CryptoSerializer,
     }
 
-    permission_classes = {
-        "list": [IsAuthenticated],
-        "create": [IsAuthenticated, IsAdminUser],
-        "update": [IsAuthenticated, IsAdminUser],
-        "partial_update": [IsAuthenticated, IsAdminUser],
-        "destroy": [IsAuthenticated, IsAdminUser],
-    }
+    default_permission_classes = [IsAuthenticated, IsAdminUser]
+
+    permission_class = {"list": [IsAuthenticated]}
 
     def get_permissions(self):
         return [
-            permission() for permission in self.permission_classes.get(self.action, [])
+            permission()
+            for permission in self.permission_class.get(
+                self.action, self.default_permission_classes
+            )
         ]
 
     def get_serializer_class(self):
@@ -91,15 +89,18 @@ class SubscriptionViewSet(
         "default": SubscriptionSerializer,
     }
 
-    permission_classes = {
-        "list": [IsAuthenticated],
-        "create": [IsAuthenticated],
-        "destroy": [IsAuthenticated],
+    default_permission_class = [IsAuthenticated]
+
+    permission_class = {
+        "destroy": [IsAuthenticated, IsOwnerOrAdmin],
     }
 
     def get_permissions(self):
         return [
-            permission() for permission in self.permission_classes.get(self.action, [])
+            permission()
+            for permission in self.permission_class.get(
+                self.action, self.default_permission_class
+            )
         ]
 
     def get_serializer_class(self):
@@ -116,11 +117,11 @@ class SubscriptionViewSet(
 
 class HistoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = History.objects.all()
-    serializer_classes = {
+    serializer_class = {
         "default": HistorySerializer,
     }
 
-    permission_classes = {
+    permission_class = {
         "list": [IsAuthenticated],
     }
 
@@ -130,9 +131,7 @@ class HistoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         ]
 
     def get_serializer_class(self):
-        return self.serializer_classes.get(
-            self.action, self.serializer_classes["default"]
-        )
+        return self.serializer_class.get(self.action, self.serializer_class["default"])
 
     def get_queryset(self):
         if self.action == "list":

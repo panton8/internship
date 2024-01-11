@@ -66,7 +66,13 @@ def complete_auto_order(crypto_pk=None, new_ex_rate=None):
     for order in orders:
         order.fill_amount_or_price()
         order.save()
-        if order.crypto.exchange_rate <= order.desired_exchange_rate:
+        if (
+            order.order_type == Order.OrderType.PURCHASE
+            and order.crypto.exchange_rate <= order.desired_exchange_rate
+        ) or (
+            order.order_type == Order.OrderType.SALE
+            and order.crypto.exchange_rate >= order.desired_exchange_rate
+        ):
             user = order.user
             possible_wallet = Wallet.objects.filter(
                 crypto=order.crypto, user=user
