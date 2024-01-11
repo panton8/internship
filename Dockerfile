@@ -1,27 +1,24 @@
-# Set base image (host OS)
-FROM python:3.10-slim
+# Stage 1
+FROM python:3.10-alpine as builder
 
-# Set work directory in the container
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install pipenv
-RUN pip install pipenv
+COPY Pipfile Pipfile.lock ./
 
-# Copy pip dependencies first, to take advantage of docker caching
-COPY ./Pipfile ./Pipfile.lock ./
+RUN pip install pipenv && \
+    pipenv requirements > requirements.txt && \
+    pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
-# Install dependencies using pipenv
-RUN pipenv install --deploy --system
+# Stage 2
+FROM python:3.10-alpine
 
+WORKDIR /app
 
-# Copy the rest of the code
+COPY --from=builder  /app/wheels /wheels
+COPY --from=builder  /app/requirements.txt .
 COPY . /app
 
-# Copy the Django entrypoint script into the container
-COPY entrypoint-django.sh /entrypoint-django.sh
-
-# Give execution permissions to the entrypoint script
-RUN chmod +x ./entrypoint-django.sh
+RUN pip install --no-cache /wheels/*

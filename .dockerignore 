@@ -2,7 +2,5 @@
 .dockerignore
 .gitignore
 .pre-commit-config.yaml
-docker-compose.yml
-Dockerfile
-.env
 coverage
+data/db
