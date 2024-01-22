@@ -1,8 +1,10 @@
-from django.db.models.signals import post_save, pre_save
+from celery.signals import beat_init
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 from stocks.models import Crypto, Order
-from stocks.tasks import complete_auto_order, complete_order
+from stocks.tasks import (complete_auto_order, complete_order, receive_data,
+                          send_data)
 
 
 @receiver(post_save, sender=Order)
@@ -18,3 +20,20 @@ def close_order(sender, instance, **kwargs):
     previous_instance = sender.objects.filter(pk=instance.pk).first()
     if previous_instance and previous_instance.exchange_rate != instance.exchange_rate:
         complete_auto_order.delay(instance.pk, instance.exchange_rate)
+
+
+@receiver(post_save, sender=Crypto)
+def post_save_crypto(sender, instance, created, **kwargs):
+    if created:
+        send_data.delay()
+
+
+@receiver(post_delete, sender=Crypto)
+def post_delete_crypto(sender, instance, **kwargs):
+    send_data.delay()
+
+
+@beat_init.connect
+def start_app(**kwargs):
+    receive_data.delay()
+    send_data.delay()
