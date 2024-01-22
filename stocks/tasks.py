@@ -7,7 +7,9 @@ from celery.utils.log import get_task_logger
 from dotenv import load_dotenv
 
 from crypto_project.celery import app
+from stocks.consumer import KafkaConsumer
 from stocks.models import Crypto, History, Order, Wallet
+from stocks.producer import KafkaProducer
 from stocks.utils import order_possible_complete_check
 from users.models import User
 
@@ -103,3 +105,13 @@ def confirm_order(order_pk, user_pk):
     with smtplib.SMTP_SSL(os.getenv("EMAIL_HOST"), os.getenv("EMAIL_PORT")) as server:
         server.login(os.getenv("EMAIL_HOST_USER"), os.getenv("EMAIL_HOST_PASSWORD"))
         server.send_message(msg)
+
+
+@shared_task
+def send_data():
+    KafkaProducer.publish()
+
+
+@shared_task
+def receive_data():
+    KafkaConsumer.subscribe()
