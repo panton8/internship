@@ -10,6 +10,8 @@ services:
       - POSTGRES_PASSWORD=postgres
     ports:
       - "5432:5432"
+    networks:
+      - kafka_connection
     volumes:
       - ./data/db:/var/lib/postgresql/data
 
@@ -19,6 +21,8 @@ services:
     entrypoint: ["/app/entrypoint-django.sh"]
     ports:
       - "8000:8000"
+    networks:
+      - kafka_connection
     env_file:
       - .env
     volumes:
@@ -29,11 +33,15 @@ services:
   redis:
     container_name: redis
     image: "redis:alpine"
+    networks:
+      - kafka_connection
 
   celery:
     container_name: celery
     build: .
     entrypoint: ["/app/entrypoint-celery.sh"]
+    networks:
+      - kafka_connection
     env_file:
       - .env
     volumes:
@@ -47,6 +55,8 @@ services:
     container_name: celery_beat
     build: .
     entrypoint: ["/app/entrypoint-celery_beat.sh"]
+    networks:
+      - kafka_connection
     env_file:
       - .env
     volumes:
@@ -62,9 +72,15 @@ services:
     entrypoint: ["/app/entrypoint-flower.sh"]
     ports:
       - "5555:5555"
+    networks:
+      - kafka_connection
     volumes:
       - .:/app
     links:
       - redis
     depends_on:
       - redis
+
+networks:
+    kafka_connection:
+      external: true
