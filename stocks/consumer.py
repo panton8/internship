@@ -34,8 +34,9 @@ class KafkaConsumer:
                 else:
                     cryptos_data = json.loads(msg.value().decode("utf-8"))
                     for code, rate in cryptos_data.items():
-                        crypto = Crypto.objects.get(code=code)
-                        crypto.exchange_rate = rate
-                        crypto.save()
+                        crypto = Crypto.objects.filter(code=code).first()
+                        if crypto:
+                            crypto.exchange_rate = rate
+                            crypto.save()
         finally:
             consumer.close()
